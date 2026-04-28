@@ -43,7 +43,7 @@ func RunMigrations(database *gorm.DB) error {
 	}
 	defer m.Close()
 
-	if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 	return nil
