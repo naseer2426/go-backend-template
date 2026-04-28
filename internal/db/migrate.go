@@ -41,7 +41,6 @@ func RunMigrations(database *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
-	defer m.Close()
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
