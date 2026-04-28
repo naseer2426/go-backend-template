@@ -3,44 +3,33 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/naseer2426/go-backend-template/internal/api"
+	"github.com/naseer2426/go-backend-template/internal/config"
+	"github.com/naseer2426/go-backend-template/internal/db"
 )
 
 func main() {
-	err := initEnv()
-	if err != nil {
-		panic(err)
-	}
+	cfg := config.MustLoad()
 	router := initRouter()
-	// run migrations
-	// db.AutoMigrate()
+
+	if cfg.Database.URL != "" {
+		if err := db.Init(cfg.Database.URL); err != nil {
+			log.Fatalf("database init failed: %v", err)
+		}
+		if err := db.RunMigrations(db.GetDB()); err != nil {
+			log.Fatalf("database migrations failed: %v", err)
+		}
+	}
 
 	router.GET("/", api.HealthCheck)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	if err := router.Run(fmt.Sprintf(":%s", port)); err != nil {
+	addr := fmt.Sprintf(":%s", cfg.Server.Port)
+	if err := router.Run(addr); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
-}
-
-func initEnv() error {
-	// Load environment variables from .env file if present
-	if err := godotenv.Load(); err != nil {
-		// Only log if the file is missing; envs may be provided by the environment
-		if !os.IsNotExist(err) {
-			log.Printf("warning: could not load .env: %v", err)
-			return err
-		}
-	}
-	return nil
 }
 
 func initRouter() *gin.Engine {
